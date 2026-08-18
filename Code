@@ -1,0 +1,46 @@
+from fastapi import FastAPI
+from pydantic import BaseModel
+from celery import Celery
+
+app = FastAPI()
+
+# Redis
+celery = Celery(
+    "tasks",
+    broker="redis://localhost:6379/0"
+)
+
+# Simple database-like storage
+users = []
+
+
+class User(BaseModel):
+    name: str
+    email: str
+
+
+@app.post("/users")
+def create_user(user: User):
+    users.append(user.dict())
+    return {"message": "User created", "user": user}
+
+
+@app.get("/dashboard")
+def dashboard():
+    return {
+        "total_users": len(users),
+        "users": users
+    }
+
+
+@celery.task
+def send_notification(email, message):
+    print(f"Notification sent to {email}: {message}")
+
+
+@app.post("/notify")
+def notify(email: str, message: str):
+    # Runs in background through Celery + Redis
+    send_notification.delay(email, message)
+
+    return {"message": "Notification scheduled"}
