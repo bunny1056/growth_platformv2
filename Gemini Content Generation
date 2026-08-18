@@ -1,0 +1,10 @@
+def generate_content(prompt):
+    # Gemini API call would go here
+    return f"Generated marketing content for: {prompt}"
+
+
+content = generate_content(
+    "Create a WhatsApp promotion for a small business"
+)
+
+print(content)
